@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DJMohammedReza</title>
+
+<style>
+body {
+  margin:0;
+  font-family:sans-serif;
+  background:#121212;
+  color:white;
+}
+
+header {
+  padding:15px;
+  font-size:20px;
+  font-weight:bold;
+}
+
+.container {
+  padding:10px;
+}
+
+.card {
+  background:#181818;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:10px;
+}
+
+img {
+  width:100%;
+  border-radius:10px;
+}
+
+audio {
+  width:100%;
+  margin-top:10px;
+}
+
+button {
+  background:#1db954;
+  border:none;
+  padding:8px 12px;
+  border-radius:20px;
+  color:white;
+  cursor:pointer;
+}
+
+input {
+  width:100%;
+  padding:8px;
+  margin-top:5px;
+  border-radius:5px;
+  border:none;
+}
+</style>
+</head>
+
+<body>
+
+<header>🎧 DJMohammedReza</header>
+
+<div class="container" id="musicList"></div>
+
+<script>
+const API = "";
+
+async function loadMusic(){
+  let res = await fetch(API + "/music");
+  let data = await res.json();
+
+  let html = "";
+
+  data.reverse().forEach(m => {
+    html += `
+    <div class="card">
+      <img src="${API + m.cover}">
+      <h3>${m.title}</h3>
+      <p>${m.artist}</p>
+
+      <audio controls src="${API + m.file}"></audio>
+
+      <p>👁 ${m.views} | ❤️ ${m.likes}</p>
+
+      <button onclick="like(${m.id})">لایک</button>
+
+      <div>
+        <input placeholder="اسم شما" id="name${m.id}">
+        <input placeholder="کامنت..." id="comment${m.id}">
+        <button onclick="sendComment(${m.id})">ارسال</button>
+      </div>
+
+      <div id="comments${m.id}"></div>
+    </div>
+    `;
+  });
+
+  document.getElementById("musicList").innerHTML = html;
+
+  data.forEach(m => loadComments(m.id));
+}
+
+async function like(id){
+  await fetch(API + "/like/" + id, {method:"POST"});
+  loadMusic();
+}
+
+async function sendComment(id){
+  let name = document.getElementById("name"+id).value;
+  let text = document.getElementById("comment"+id).value;
+
+  await fetch(API + "/comment/" + id, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({name,text})
+  });
+
+  loadMusic();
+}
+
+async function loadComments(id){
+  let res = await fetch(API + "/comments/" + id);
+  let data = await res.json();
+
+  let html = "";
+  data.forEach(c=>{
+    html += `<p>👤 ${c.name}: ${c.text}</p>`;
+  });
+
+  document.getElementById("comments"+id).innerHTML = html;
+}
+
+loadMusic();
+</script>
+
+</body>
+</html>
