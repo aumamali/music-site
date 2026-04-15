@@ -1,95 +1,152 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-<meta charset="UTF-8">
-<title>Music Site</title>
+  <meta charset="UTF-8">
+  <title>Music Site</title>
 
-<style>
-body {
-  background: #0d0d0d;
-  color: white;
-  font-family: sans-serif;
-  text-align: center;
-}
+  <style>
+    body {
+      background: #121212;
+      color: white;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
 
-/* اسم دیجی بالا */
-.header {
-  font-size: 28px;
-  padding: 15px;
-  background: #1db954;
-  color: black;
-  font-weight: bold;
-}
+    h1 {
+      text-align: center;
+      color: #1db954;
+    }
 
-/* کارت موزیک */
-.card {
-  background: #1a1a1a;
-  margin: 20px;
-  padding: 15px;
-  border-radius: 15px;
-}
+    .dj-name {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 18px;
+      color: #aaa;
+    }
 
-button {
-  padding: 8px 15px;
-  margin: 5px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
+    .music {
+      background: #1e1e1e;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+    }
 
-.like { background: red; color: white; }
-.play { background: #1db954; }
-</style>
+    button {
+      margin: 5px;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      background: #1db954;
+      color: white;
+      cursor: pointer;
+    }
 
+    input {
+      padding: 5px;
+      margin-top: 5px;
+    }
+
+    .comments {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #ccc;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="header">
-Dj mohmmadreza 🎧
-</div>
+<h1>🎧 Music Site</h1>
+<div class="dj-name">DJ mohmmadreza</div>
 
-<h2>🎵 موزیک‌ها</h2>
-
-<div class="card">
-  <h3>موزیک 1</h3>
-  
-  <audio controls>
-    <source src="music1.mp3" type="audio/mpeg">
-  </audio>
-
-  <br>
-
-  <button class="like" onclick="like(this)">❤️ لایک <span>0</span></button>
-  <p>👁 ویو: <span class="view">0</span></p>
-
-  <input type="text" placeholder="کامنت بنویس..." id="c1">
-  <button onclick="comment('c1','list1')">ارسال</button>
-
-  <div id="list1"></div>
-</div>
+<div id="musicList"></div>
 
 <script>
-function like(btn){
-  let span = btn.querySelector("span");
-  span.innerText = parseInt(span.innerText) + 1;
+const API = "https://music-site-1-e21b.onrender.com"; // لینک سایتت
+
+async function loadMusics() {
+  const res = await fetch(API + "/musics");
+  const musics = await res.json();
+
+  const container = document.getElementById("musicList");
+  container.innerHTML = "";
+
+  musics.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "music";
+
+    div.innerHTML = `
+      <h3>${m.title}</h3>
+      <audio controls src="${m.url}"></audio>
+
+      <br>
+      ❤️ ${m.likes}
+      <button onclick="likeMusic(${m.id})">لایک</button>
+
+      <br>
+      👁 <span id="view-${m.id}">0</span>
+
+      <br><br>
+
+      <input id="name-${m.id}" placeholder="نام">
+      <input id="text-${m.id}" placeholder="کامنت">
+      <button onclick="sendComment(${m.id})">ارسال</button>
+
+      <div class="comments" id="comments-${m.id}"></div>
+    `;
+
+    container.appendChild(div);
+
+    loadViews(m.id);
+    loadComments(m.id);
+    sendView(m.id);
+  });
 }
 
-let views = document.querySelectorAll(".view");
-views.forEach(v=>{
-  v.innerText = Math.floor(Math.random()*100);
-});
+async function likeMusic(id) {
+  const user = prompt("اسمت چیه؟");
+  await fetch(API + "/like/" + id, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ user })
+  });
 
-function comment(inputId, listId){
-  let text = document.getElementById(inputId).value;
-  if(text === "") return;
-
-  let div = document.createElement("p");
-  div.innerText = "👤 " + text;
-
-  document.getElementById(listId).appendChild(div);
-  document.getElementById(inputId).value = "";
+  loadMusics();
 }
+
+async function sendView(id) {
+  await fetch(API + "/view/" + id, { method: "POST" });
+}
+
+async function loadViews(id) {
+  const res = await fetch(API + "/views/" + id);
+  const data = await res.json();
+  document.getElementById("view-" + id).innerText = data.views;
+}
+
+async function sendComment(id) {
+  const name = document.getElementById("name-" + id).value;
+  const text = document.getElementById("text-" + id).value;
+
+  await fetch(API + "/comment/" + id, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ name, text })
+  });
+
+  loadComments(id);
+}
+
+async function loadComments(id) {
+  const res = await fetch(API + "/comments/" + id);
+  const data = await res.json();
+
+  const div = document.getElementById("comments-" + id);
+  div.innerHTML = data.map(c => `<p><b>${c.name}:</b> ${c.text}</p>`).join("");
+}
+
+loadMusics();
 </script>
 
 </body>
