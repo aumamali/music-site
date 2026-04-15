@@ -1,9 +1,96 @@
 <!DOCTYPE html>
-<html>
+<html lang="fa">
 <head>
-  <title>Music Site</title>
+<meta charset="UTF-8">
+<title>Music Site</title>
+
+<style>
+body {
+  background: #0d0d0d;
+  color: white;
+  font-family: sans-serif;
+  text-align: center;
+}
+
+/* اسم دیجی بالا */
+.header {
+  font-size: 28px;
+  padding: 15px;
+  background: #1db954;
+  color: black;
+  font-weight: bold;
+}
+
+/* کارت موزیک */
+.card {
+  background: #1a1a1a;
+  margin: 20px;
+  padding: 15px;
+  border-radius: 15px;
+}
+
+button {
+  padding: 8px 15px;
+  margin: 5px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.like { background: red; color: white; }
+.play { background: #1db954; }
+</style>
+
 </head>
+
 <body>
-  <h1>سایت موزیک من 🎵</h1>
+
+<div class="header">
+Dj mohmmadreza 🎧
+</div>
+
+<h2>🎵 موزیک‌ها</h2>
+
+<div class="card">
+  <h3>موزیک 1</h3>
+  
+  <audio controls>
+    <source src="music1.mp3" type="audio/mpeg">
+  </audio>
+
+  <br>
+
+  <button class="like" onclick="like(this)">❤️ لایک <span>0</span></button>
+  <p>👁 ویو: <span class="view">0</span></p>
+
+  <input type="text" placeholder="کامنت بنویس..." id="c1">
+  <button onclick="comment('c1','list1')">ارسال</button>
+
+  <div id="list1"></div>
+</div>
+
+<script>
+function like(btn){
+  let span = btn.querySelector("span");
+  span.innerText = parseInt(span.innerText) + 1;
+}
+
+let views = document.querySelectorAll(".view");
+views.forEach(v=>{
+  v.innerText = Math.floor(Math.random()*100);
+});
+
+function comment(inputId, listId){
+  let text = document.getElementById(inputId).value;
+  if(text === "") return;
+
+  let div = document.createElement("p");
+  div.innerText = "👤 " + text;
+
+  document.getElementById(listId).appendChild(div);
+  document.getElementById(inputId).value = "";
+}
+</script>
+
 </body>
 </html>
