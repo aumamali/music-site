@@ -1,79 +1,94 @@
-const express = require("express");
-const cors = require("cors");
-
+const express = require('express');
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 3000;
+
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// 👇 برای لود کردن فایل‌های داخل public (خیلی مهم)
-app.use(express.static("public"));
+let songs = [];
 
-let musics = [];
-let comments = {};
+// صفحه اصلی سایت
+app.get('/', (req, res) => {
+  let songsHtml = songs.map(song => `
+    <div style="margin:10px;padding:10px;background:#1e1e1e;border-radius:8px;">
+      <h3>${song.name}</h3>
+      <audio controls src="${song.url}"></audio>
+    </div>
+  `).join('');
 
-// گرفتن همه موزیک‌ها
-app.get("/musics", (req, res) => {
-  res.json(musics);
+  res.send(`
+    <html>
+      <head>
+        <title>Music Site</title>
+        <style>
+          body {
+            background:#121212;
+            color:white;
+            font-family:sans-serif;
+            text-align:center;
+            padding:20px;
+          }
+          h1 {
+            color:#1db954;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>🎵 Music Site</h1>
+        ${songsHtml || "<p>No songs added yet</p>"}
+      </body>
+    </html>
+  `);
 });
 
-// اضافه کردن موزیک
-app.post("/add-music", (req, res) => {
-  const music = {
-    id: Date.now(),
-    title: req.body.title,
-    artist: req.body.artist,
-    url: req.body.url,
-    cover: req.body.cover,
-    likes: 0,
-    views: 0
-  };
-
-  musics.push(music);
-  res.json({ message: "added", music });
+// پنل ادمین
+app.get('/admin', (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>Admin Panel</title>
+        <style>
+          body {
+            background:#121212;
+            color:white;
+            font-family:sans-serif;
+            text-align:center;
+            padding:20px;
+          }
+          input {
+            padding:10px;
+            margin:5px;
+            width:250px;
+          }
+          button {
+            padding:10px 20px;
+            margin:5px;
+            background:#1db954;
+            color:white;
+            border:none;
+            cursor:pointer;
+          }
+        </style>
+      </head>
+      <body>
+        <h1>Admin Panel</h1>
+        <form method="POST" action="/add-song">
+          <input name="name" placeholder="Song Name" required /><br>
+          <input name="url" placeholder="Song URL" required /><br>
+          <button type="submit">Add Song</button>
+        </form>
+      </body>
+    </html>
+  `);
 });
 
-// لایک کردن
-app.post("/like/:id", (req, res) => {
-  const music = musics.find(m => m.id == req.params.id);
-  if (music) {
-    music.likes++;
-    res.json({ likes: music.likes });
-  } else {
-    res.status(404).send("Not found");
-  }
+// افزودن آهنگ
+app.post('/add-song', (req, res) => {
+  const { name, url } = req.body;
+  songs.push({ name, url });
+  res.redirect('/admin');
 });
 
-// ویو خوردن
-app.post("/view/:id", (req, res) => {
-  const music = musics.find(m => m.id == req.params.id);
-  if (music) {
-    music.views++;
-    res.json({ views: music.views });
-  } else {
-    res.status(404).send("Not found");
-  }
-});
-
-// کامنت گذاشتن
-app.post("/comment/:id", (req, res) => {
-  const id = req.params.id;
-
-  if (!comments[id]) comments[id] = [];
-
-  comments[id].push({
-    name: req.body.name,
-    text: req.body.text
-  });
-
-  res.send("comment added");
-});
-
-// گرفتن کامنت‌ها
-app.get("/comments/:id", (req, res) => {
-  res.json(comments[req.params.id] || []);
-});
-
-// روشن کردن سرور
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
